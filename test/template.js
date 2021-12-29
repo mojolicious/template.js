@@ -94,6 +94,10 @@ foo
     t.equal(await Template.render('<%== 1 + 1 %><%== 1 + 2 %>'), '23');
   });
 
+  await t.test('Escaped multiline expression', async t => {
+    t.equal(await Template.render('<%==\n"hello " \n+"world"\n%>'), 'hello world');
+  });
+
   await t.test('Empty statement', async t => {
     t.equal(await Template.render('test\n\n123\n\n<% %>456\n789'), 'test\n\n123\n\n456\n789');
   });

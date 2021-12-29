@@ -65,27 +65,57 @@ export default class Template {
   }
 }
 
+function appendNodes(ast: AST, ...nodes: ASTNode[]): void {
+  for (const node of nodes) {
+    const position = ast.length - 1;
+    if (position >= 0 && ast[position].op === node.op) {
+      ast[position].value += node.value;
+    } else {
+      ast.push(node);
+    }
+  }
+}
+
 function compileTemplate(ast: AST): string {
-  const buffer = [];
-  for (const node of ast) {
+  let source = '';
+
+  for (let i = 0; i < ast.length; i++) {
+    const node = ast[i];
+
     const op = node.op;
-    if (op === 'text') {
-      buffer.push("__output += '" + escapeText(node.value) + "';");
-    } else if (op === 'escape') {
-      buffer.push('__output += __escape(' + sanitizeExpr(node.value) + ');');
-    } else if (op === 'expression') {
-      buffer.push('__output += ' + sanitizeExpr(node.value) + ';');
+    if (op === 'escape' || op === 'expression') {
+      let value = node.value;
+
+      // Multi-line expression (require look-ahead)
+      while (ast[i + 1] !== undefined) {
+        const lineNode = ast[i + 1];
+        if (lineNode.op === 'line') {
+          const exprNode = ast[i + 2];
+          if (exprNode !== undefined && exprNode.op === op) {
+            value += '\n' + exprNode.value;
+            i += 2;
+          } else {
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+
+      value = sanitizeExpr(value);
+      source += op === 'escape' ? `__output += __escape(${value});` : `__output += ${value};`;
+    } else if (op === 'text') {
+      source += `__output += '${escapeText(node.value)}';`;
     } else if (op === 'code') {
-      buffer.push(node.value);
+      source += node.value;
     } else if (op === 'line') {
-      buffer.push('\n');
+      source += '\n';
     }
   }
 
-  let source = buffer.join('');
-  source = "let __output = '';" + source + 'return __output;';
-  source = 'with(__locals){' + source + '}';
-  source = 'try {' + source + '} catch (error) { __context(error, __source) }';
+  source = `let __output = ''; ${source} return __output;`;
+  source = `with(__locals){ ${source} }`;
+  source = `try { ${source} } catch (error) { __context(error, __source) }`;
 
   return source;
 }
@@ -94,20 +124,19 @@ function escapeText(text: string): string {
   return text.replaceAll("'", "\\'").replaceAll('\\', '\\\\').replaceAll('\n', '\\n').replaceAll('\r', '\\r');
 }
 
-function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: ASTNode[]; nextOp: Op} {
-  const nodes: ASTNode[] = [];
+function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; nextOp: Op} {
+  const nodes: AST = [];
 
   const sticky = {offset: 0, value: line};
   while (line.length > sticky.offset) {
     if (op !== 'text') {
       const endMatch = stickyMatch(sticky, END_RE);
       if (endMatch !== null) {
-        nodes.push({op, value: endMatch[1]});
-        if (op === 'escape' || op === 'expression') nodes.push({op: 'end', value: ''});
+        appendNodes(nodes, {op, value: endMatch[1]}, {op: 'end', value: ''});
         op = 'text';
         continue;
       } else {
-        nodes.push({op, value: line.slice(sticky.offset)});
+        appendNodes(nodes, {op, value: line.slice(sticky.offset)});
         sticky.offset = line.length;
       }
     } else {
@@ -115,10 +144,10 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: ASTNode[]
       if (startMatch !== null) {
         const leftovers = startMatch[1];
         const type = startMatch[2];
-        if (leftovers !== '') nodes.push({op, value: leftovers});
+        if (leftovers !== '') appendNodes(nodes, {op, value: leftovers});
 
         if (type === '%') {
-          nodes.push({op: 'text', value: '<%'});
+          appendNodes(nodes, {op: 'text', value: '<%'});
         } else if (type === '#') {
           op = 'comment';
         } else if (type === '=') {
@@ -129,13 +158,13 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: ASTNode[]
           op = 'code';
         }
       } else {
-        nodes.push({op, value: line.slice(sticky.offset)});
+        appendNodes(nodes, {op, value: line.slice(sticky.offset)});
         sticky.offset = line.length;
       }
     }
   }
 
-  if (op === 'text' && isLastLine === false) nodes.push({op, value: '\n'});
+  if (op === 'text' && isLastLine === false) appendNodes(nodes, {op, value: '\n'});
 
   return {nodes, nextOp: op};
 }
@@ -159,23 +188,21 @@ function parseTemplate(lines: string[]): AST {
 
         if (type === '%') {
           const {nodes, nextOp} = parseLine(lineMatch[1] + type + value, op, i === last);
-          ast.push(...nodes);
+          appendNodes(ast, ...nodes);
           op = nextOp;
         } else if (type === '#') {
-          ast.push({op: 'comment', value});
+          appendNodes(ast, {op: 'comment', value});
         } else if (type === '=') {
-          ast.push({op: 'escape', value});
-          ast.push({op: 'end', value: ''});
-          if (i !== last) ast.push({op: 'text', value: '\n'});
+          appendNodes(ast, {op: 'escape', value});
+          if (i !== last) appendNodes(ast, {op: 'text', value: '\n'});
         } else if (type === '==') {
-          ast.push({op: 'expression', value});
-          ast.push({op: 'end', value: ''});
-          if (i !== last) ast.push({op: 'text', value: '\n'});
+          appendNodes(ast, {op: 'expression', value});
+          if (i !== last) appendNodes(ast, {op: 'text', value: '\n'});
         } else {
-          ast.push({op: 'code', value});
+          appendNodes(ast, {op: 'code', value});
         }
 
-        ast.push({op: 'line', value: ''});
+        appendNodes(ast, {op: 'end', value: ''}, {op: 'line', value: ''});
         op = 'text';
         continue;
       }
@@ -183,7 +210,7 @@ function parseTemplate(lines: string[]): AST {
 
     // Mixed line
     const {nodes, nextOp} = parseLine(line, op, i === last);
-    ast.push(...nodes, {op: 'line', value: ''});
+    appendNodes(ast, ...nodes, {op: 'line', value: ''});
     op = nextOp;
   }
 
