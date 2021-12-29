@@ -90,6 +90,14 @@ foo
     t.equal(await Template.render(control, {num: 2}), '\n<html foo="bar">\n3 test 4 lala \n4\n</html>\n');
   });
 
+  await t.test('Empty statement', async t => {
+    t.equal(await Template.render('test\n\n123\n\n<% %>456\n789'), 'test\n\n123\n\n456\n789');
+  });
+
+  await t.test('Scoped variables', async t => {
+    t.equal(await Template.render('% const foo = "bar";\n<%= foo %>\n'), 'bar\n');
+  });
+
   await t.test('Syntax error', async t => {
     const exception = `
 test
@@ -159,5 +167,43 @@ test
     t.match(result, / {4}6| %= 1 + 1/);
     t.match(result, / {4}7| test/);
     t.match(result, /dies!/);
+  });
+
+  await t.test('Exception in first line', async t => {
+    let result;
+    try {
+      await Template.render('% dies();', {
+        dies: () => {
+          throw new Error('dies!');
+        }
+      });
+    } catch (error) {
+      result = error;
+    }
+    t.match(result, / >> 1| % dies()/);
+    t.match(result, /dies!/);
+  });
+
+  await t.test('Exception with different name', async t => {
+    const template = new Template('<% throw new Error("works!"); %>', {name: 'src/template.mt'});
+    const fn = template.compile();
+    let result;
+    try {
+      await fn();
+    } catch (error) {
+      result = error;
+    }
+    t.match(result, / >> 1| <% throw new Error("works!") %>/);
+    t.match(result, /src\/template\.mt/);
+  });
+
+  await t.test('Custom escape function', async t => {
+    const template = new Template('<%= "hi" %>', {
+      escape: function (input) {
+        return `+${input}`;
+      }
+    });
+    const fn = template.compile();
+    t.equal(await fn(), '+hi');
   });
 });
