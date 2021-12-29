@@ -90,6 +90,10 @@ foo
     t.equal(await Template.render(control, {num: 2}), '\n<html foo="bar">\n3 test 4 lala \n4\n</html>\n');
   });
 
+  await t.test('Consecutive expressions', async t => {
+    t.equal(await Template.render('<%== 1 + 1 %><%== 1 + 2 %>'), '23');
+  });
+
   await t.test('Empty statement', async t => {
     t.equal(await Template.render('test\n\n123\n\n<% %>456\n789'), 'test\n\n123\n\n456\n789');
   });
