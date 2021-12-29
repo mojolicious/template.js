@@ -14,14 +14,14 @@ interface Source {
   name: string;
 }
 
-type Op = 'comment' | 'code' | 'escape' | 'expression' | 'text';
+type Op = 'comment' | 'code' | 'escape' | 'expression' | 'line' | 'text';
 
 interface ASTNode {
   op: Op;
   value: string;
 }
 
-type AST = ASTNode[][];
+type AST = ASTNode[];
 
 const DEBUG = process.env.MOJO_TEMPLATE_DEBUG === '1';
 
@@ -68,22 +68,21 @@ export default class Template {
 function compileTemplate(ast: AST): string {
   const lines = [];
 
-  for (const nodes of ast) {
-    const line = [];
-    for (const node of nodes) {
-      const op = node.op;
-      if (op === 'text') {
-        line.push("__output += '" + escapeText(node.value) + "';");
-      } else if (op === 'escape') {
-        line.push('__output += __escape(' + sanitizeExpr(node.value) + ');');
-      } else if (op === 'expression') {
-        line.push('__output += ' + sanitizeExpr(node.value) + ';');
-      } else if (op === 'code') {
-        line.push(node.value);
-      }
+  let line = [];
+  for (const node of ast) {
+    const op = node.op;
+    if (op === 'text') {
+      line.push("__output += '" + escapeText(node.value) + "';");
+    } else if (op === 'escape') {
+      line.push('__output += __escape(' + sanitizeExpr(node.value) + ');');
+    } else if (op === 'expression') {
+      line.push('__output += ' + sanitizeExpr(node.value) + ';');
+    } else if (op === 'code') {
+      line.push(node.value);
+    } else if (op === 'line') {
+      lines.push(line.join(''));
+      line = [];
     }
-
-    lines.push(line.join(''));
   }
 
   let source = lines.join('\n');
@@ -101,18 +100,13 @@ function escapeText(text: string): string {
 function optimizeTemplate(ast: AST): AST {
   const optimized: AST = [];
 
-  for (const nodes of ast) {
-    const current: ASTNode[] = [];
-    optimized.push(current);
-
-    // Combine consecutive nodes with same type
-    for (const node of nodes) {
-      const position = current.length - 1;
-      if (position >= 0 && current[position].op === node.op) {
-        current[position].value += node.value;
-      } else {
-        current.push(node);
-      }
+  // Combine consecutive nodes with same type
+  for (const node of ast) {
+    const position = optimized.length - 1;
+    if (position >= 0 && optimized[position].op === node.op) {
+      optimized[position].value += node.value;
+    } else {
+      optimized.push(node);
     }
   }
 
@@ -174,9 +168,6 @@ function parseTemplate(lines: string[]): AST {
   for (let i = 0; i < numLines; i++) {
     const line = lines[i];
 
-    const current: ASTNode[] = [];
-    ast.push(current);
-
     // JavaScript line
     if (op === 'text') {
       const lineMatch = line.match(LINE_RE);
@@ -186,20 +177,21 @@ function parseTemplate(lines: string[]): AST {
 
         if (type === '%') {
           const {nodes, nextOp} = parseLine(lineMatch[1] + type + value, op, i === last);
-          current.push(...nodes);
+          ast.push(...nodes);
           op = nextOp;
         } else if (type === '#') {
-          current.push({op: 'comment', value});
+          ast.push({op: 'comment', value});
         } else if (type === '=') {
-          current.push({op: 'escape', value});
-          if (i !== last) current.push({op: 'text', value: '\n'});
+          ast.push({op: 'escape', value});
+          if (i !== last) ast.push({op: 'text', value: '\n'});
         } else if (type === '==') {
-          current.push({op: 'expression', value});
-          if (i !== last) current.push({op: 'text', value: '\n'});
+          ast.push({op: 'expression', value});
+          if (i !== last) ast.push({op: 'text', value: '\n'});
         } else {
-          current.push({op: 'code', value});
+          ast.push({op: 'code', value});
         }
 
+        ast.push({op: 'line', value: ''});
         op = 'text';
         continue;
       }
@@ -207,7 +199,7 @@ function parseTemplate(lines: string[]): AST {
 
     // Mixed line
     const {nodes, nextOp} = parseLine(line, op, i === last);
-    current.push(...nodes);
+    ast.push(...nodes, {op: 'line', value: ''});
     op = nextOp;
   }
 
