@@ -102,6 +102,8 @@ __output += '!\n';
 return __output; } } catch (error) { __context(error, __source) }
 ```
 
+You can set the `MOJO_TEMPLATE_DEBUG=1` environment variable to get the generated code printed to `STDERR`.
+
 ## Installation
 
 All you need is Node.js 16.0.0 (or newer).
