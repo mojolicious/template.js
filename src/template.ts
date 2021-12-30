@@ -143,7 +143,7 @@ function compileTemplate(ast: AST): string {
 }
 
 function escapeText(text: string): string {
-  return text.replaceAll("'", "\\'").replaceAll('\\', '\\\\').replaceAll('\n', '\\n').replaceAll('\r', '\\r');
+  return text.replaceAll('\\', '\\\\').replaceAll("'", "\\'").replaceAll('\n', '\\n').replaceAll('\r', '\\r');
 }
 
 function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; nextOp: Op} {

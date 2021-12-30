@@ -11,6 +11,7 @@ t.test('Template', async t => {
 
   await t.test('String', async t => {
     t.equal(await Template.render('Just a <%= "test" %>'), 'Just a test');
+    t.equal(await Template.render('J\r\nust\' \\a \\<%= "test" %>\r\n'), "J\r\nust' \\a \\test\r\n");
     t.equal(await Template.render('Just a <%= await "test" %>'), 'Just a test');
   });
 
