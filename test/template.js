@@ -149,6 +149,106 @@ test
     t.match(result, /oops!/);
   });
 
+  await t.test('Exception with multi-line expression', async t => {
+    const exception = `
+<%==
+123 +
+45
++ 6
+%>
+% throw new Error('oops!');
+test
+`;
+    let result;
+    try {
+      await Template.render(exception);
+    } catch (error) {
+      result = error;
+    }
+    t.match(result, /template:7/);
+    t.match(result, / {4}5| + 6/);
+    t.match(result, / {4}6| %>/);
+    t.match(result, / >> 7| % throw new Error('oops!');/);
+    t.match(result, / {4}8| test/);
+    t.match(result, / {4}9| /);
+    t.match(result, /oops!/);
+  });
+
+  await t.test('Exception with escaped multi-line expression', async t => {
+    const exception = `
+<%=
+123 +
+45
++ 6
+%>
+% throw new Error('oops!');
+test
+`;
+    let result;
+    try {
+      await Template.render(exception);
+    } catch (error) {
+      result = error;
+    }
+    t.match(result, /template:7/);
+    t.match(result, / {4}5| + 6/);
+    t.match(result, / {4}6| %>/);
+    t.match(result, / >> 7| % throw new Error('oops!');/);
+    t.match(result, / {4}8| test/);
+    t.match(result, / {4}9| /);
+    t.match(result, /oops!/);
+  });
+
+  await t.test('Exception with multi-line comment', async t => {
+    const exception = `
+<%#
+123 +
+45
++ 6
+%>
+% throw new Error('oops!');
+test
+`;
+    let result;
+    try {
+      await Template.render(exception);
+    } catch (error) {
+      result = error;
+    }
+    t.match(result, /template:7/);
+    t.match(result, / {4}5| + 6/);
+    t.match(result, / {4}6| %>/);
+    t.match(result, / >> 7| % throw new Error('oops!');/);
+    t.match(result, / {4}8| test/);
+    t.match(result, / {4}9| /);
+    t.match(result, /oops!/);
+  });
+
+  await t.test('Exception with multi-line code', async t => {
+    const exception = `
+<%
+
+const foo = 'bar';
+
+%>
+% throw new Error('oops!');
+test
+`;
+    let result;
+    try {
+      await Template.render(exception);
+    } catch (error) {
+      result = error;
+    }
+    t.match(result, /template:7/);
+    t.match(result, / {4}5| const foo = 'bar';/);
+    t.match(result, / {4}6| /);
+    t.match(result, / >> 7| % throw new Error('oops!');/);
+    t.match(result, / {4}8| test/);
+    t.match(result, / {4}9| /);
+    t.match(result, /oops!/);
+  });
+
   await t.test('Exception in function', async t => {
     const exception = `
 test

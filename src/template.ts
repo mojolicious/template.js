@@ -86,7 +86,7 @@ function compileTemplate(ast: AST): string {
     if (op === 'escape' || op === 'expression') {
       let value = node.value;
 
-      // Multi-line expression (require look-ahead)
+      // Multi-line expression (requires look-ahead)
       while (ast[i + 1] !== undefined) {
         const lineNode = ast[i + 1];
         if (lineNode.op === 'line') {
@@ -148,14 +148,17 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
 
         if (type === '%') {
           appendNodes(nodes, {op: 'text', value: '<%'});
-        } else if (type === '#') {
-          op = 'comment';
-        } else if (type === '=') {
-          op = 'escape';
-        } else if (type === '==') {
-          op = 'expression';
         } else {
-          op = 'code';
+          if (type === '#') {
+            op = 'comment';
+          } else if (type === '=') {
+            op = 'escape';
+          } else if (type === '==') {
+            op = 'expression';
+          } else {
+            op = 'code';
+          }
+          appendNodes(nodes, {op, value: ''});
         }
       } else {
         appendNodes(nodes, {op, value: line.slice(sticky.offset)});
@@ -206,6 +209,12 @@ function parseTemplate(lines: string[]): AST {
         op = 'text';
         continue;
       }
+    }
+
+    // Empty line
+    else if (line === '') {
+      appendNodes(ast, {op, value: ''}, {op: 'line', value: ''});
+      continue;
     }
 
     // Mixed line
