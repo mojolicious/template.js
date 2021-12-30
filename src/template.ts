@@ -25,7 +25,7 @@ type AST = ASTNode[];
 
 const DEBUG = process.env.MOJO_TEMPLATE_DEBUG === '1';
 
-const LINE_RE = /^(\s*)%(%|#|={1,2})?(.+?)$/;
+const LINE_RE = /^(\s*)%(%|#|={1,2})?(.*?)$/;
 const START_RE = /(.*?)<%(%|#|={1,2})?/y;
 const END_RE = /(.*?)%>/y;
 const STACK_RE = /at eval.+eval at compile.+template\.ts:\d+:\d+.+<anonymous>:(\d+):\d+/;
