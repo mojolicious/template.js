@@ -62,8 +62,8 @@ JavaScript lines can be indented freely.
 Expressions and code blocks can also be split up over multiple lines.
 
 ```
-<%= 'Hello '
-    + randomName + '!' %>
+<div><%= 'Hello '
+         + randomName + '!' %></div>
 ```
 
 ### Debugging

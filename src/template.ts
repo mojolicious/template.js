@@ -1,3 +1,8 @@
+/*!
+ * template.js
+ * Copyright (C) 2021 Sebastian Riedel
+ * MIT Licensed
+ */
 import {AsyncFunction, stickyMatch, xmlEscape} from './util.js';
 export * from './util.js';
 
@@ -30,6 +35,9 @@ const START_RE = /(.*?)<%(%|#|={1,2})?/y;
 const END_RE = /(.*?)%>/y;
 const STACK_RE = /at eval.+eval at compile.+template\.ts:\d+:\d+.+<anonymous>:(\d+):\d+/;
 
+/**
+ * Template class.
+ */
 export default class Template {
   _ast: AST;
   _escape: EscapeFunction;
@@ -42,6 +50,9 @@ export default class Template {
     this._ast = parseTemplate(lines);
   }
 
+  /**
+   * Compile template to an async function.
+   */
   compile(): TemplateFunction {
     const code = compileTemplate(this._ast);
     const source = this._source;
@@ -60,6 +71,9 @@ export default class Template {
     }
   }
 
+  /**
+   * Render template.
+   */
   static render(source: string, data: Record<string, any> = {}, options?: TemplateOptions): Promise<string> {
     return new Template(source, options).compile()(data);
   }
