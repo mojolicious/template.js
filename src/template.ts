@@ -14,7 +14,7 @@ interface Source {
   name: string;
 }
 
-type Op = 'comment' | 'code' | 'end' | 'escape' | 'expression' | 'line' | 'text';
+type Op = 'code' | 'comment' | 'end' | 'escape' | 'expression' | 'line' | 'text';
 
 interface ASTNode {
   op: Op;
@@ -65,7 +65,7 @@ export default class Template {
   }
 }
 
-function appendNodes(ast: AST, ...nodes: ASTNode[]): void {
+function appendNodes(ast: AST, ...nodes: AST): void {
   for (const node of nodes) {
     const position = ast.length - 1;
     if (position >= 0 && ast[position].op === node.op) {
@@ -82,6 +82,7 @@ function compileTemplate(ast: AST): string {
   for (let i = 0; i < ast.length; i++) {
     const node = ast[i];
 
+    // Expression
     const op = node.op;
     if (op === 'escape' || op === 'expression') {
       let value = node.value;
@@ -94,21 +95,28 @@ function compileTemplate(ast: AST): string {
           if (exprNode !== undefined && exprNode.op === op) {
             value += '\n' + exprNode.value;
             i += 2;
-          } else {
-            break;
+            continue;
           }
-        } else {
-          break;
         }
+        break;
       }
 
       value = sanitizeExpr(value);
       source += op === 'escape' ? `__output += __escape(${value});` : `__output += ${value};`;
-    } else if (op === 'text') {
+    }
+
+    // Text
+    else if (op === 'text') {
       source += `__output += '${escapeText(node.value)}';`;
-    } else if (op === 'code') {
+    }
+
+    // Code
+    else if (op === 'code') {
       source += node.value;
-    } else if (op === 'line') {
+    }
+
+    // Newline
+    else if (op === 'line') {
       source += '\n';
     }
   }
@@ -129,6 +137,7 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
 
   const sticky = {offset: 0, value: line};
   while (line.length > sticky.offset) {
+    // Tag end
     if (op !== 'text') {
       const endMatch = stickyMatch(sticky, END_RE);
       if (endMatch !== null) {
@@ -139,23 +148,37 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
         appendNodes(nodes, {op, value: line.slice(sticky.offset)});
         sticky.offset = line.length;
       }
-    } else {
+    }
+
+    // Tag start
+    else {
       const startMatch = stickyMatch(sticky, START_RE);
       if (startMatch !== null) {
         const leftovers = startMatch[1];
         const type = startMatch[2];
         if (leftovers !== '') appendNodes(nodes, {op, value: leftovers});
 
+        // Replacement
         if (type === '%') {
           appendNodes(nodes, {op: 'text', value: '<%'});
         } else {
+          // Comment
           if (type === '#') {
             op = 'comment';
-          } else if (type === '=') {
+          }
+
+          // Escaped expression
+          else if (type === '=') {
             op = 'escape';
-          } else if (type === '==') {
+          }
+
+          // Expression
+          else if (type === '==') {
             op = 'expression';
-          } else {
+          }
+
+          // Code
+          else {
             op = 'code';
           }
           appendNodes(nodes, {op, value: ''});
@@ -167,6 +190,7 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
     }
   }
 
+  // Newline
   if (op === 'text' && isLastLine === false) appendNodes(nodes, {op, value: '\n'});
 
   return {nodes, nextOp: op};
@@ -189,22 +213,36 @@ function parseTemplate(lines: string[]): AST {
         const type = lineMatch[2];
         const value = lineMatch[3];
 
+        // Replacement
         if (type === '%') {
           const {nodes, nextOp} = parseLine(lineMatch[1] + type + value, op, i === last);
           appendNodes(ast, ...nodes);
           op = nextOp;
-        } else if (type === '#') {
+        }
+
+        // Comment
+        else if (type === '#') {
           appendNodes(ast, {op: 'comment', value});
-        } else if (type === '=') {
+        }
+
+        // Escaped expression
+        else if (type === '=') {
           appendNodes(ast, {op: 'escape', value});
           if (i !== last) appendNodes(ast, {op: 'text', value: '\n'});
-        } else if (type === '==') {
+        }
+
+        // Expression
+        else if (type === '==') {
           appendNodes(ast, {op: 'expression', value});
           if (i !== last) appendNodes(ast, {op: 'text', value: '\n'});
-        } else {
+        }
+
+        // Code
+        else {
           appendNodes(ast, {op: 'code', value});
         }
 
+        // Newline
         appendNodes(ast, {op: 'end', value: ''}, {op: 'line', value: ''});
         op = 'text';
         continue;
