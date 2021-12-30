@@ -53,6 +53,49 @@ JavaScript lines can be indented freely.
 </html
 ```
 
+Expressions and code blocks can also be split up over multiple lines.
+
+```
+<%
+  const message = 'Hello World';
+%>
+<%=
+  message
+%>!
+```
+
+The generated code for template functions is usually quite efficient, but to avoid possible syntax errors you should be
+aware of its general structure.
+
+```js
+try { with(__locals){ let __output = ''; __output += '\n';
+const message = 'Hello World';
+__output += message;
+__output += '!\n';
+return __output; } } catch (error) { __context(error, __source) }
+```
+
+### Debugging
+
+To help with debugging, all thrown exceptions are expanded with context information whenever possible. This does not
+incur a performance penalty, and therfore does not need to be disabled in production.
+
+```
+Error: template:7
+    5| </div>
+    6| <div>
+ >> 7| % throw new Error('Something went wrong...');
+    8| <main>
+    9|
+Something went wrong...
+    at eval (eval at compile (file:///home/kraih/repo/template.js/src/template.ts:53:18), <anonymous>:9:8)
+    at file:///home/kraih/repo/template.js/src/template.ts:55:19
+    at Function.render (file:///home/kraih/repo/template.js/src/template.ts:64:51)
+    at Test.<anonymous> (file:///home/kraih/repo/template.js/test/template.js:191:24)
+    at TapWrap.runInAsyncScope (node:async_hooks:199:9)
+    ...
+```
+
 ## Installation
 
 All you need is Node.js 16.0.0 (or newer).

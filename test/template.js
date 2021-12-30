@@ -25,6 +25,14 @@ t.test('Template', async t => {
 
     t.equal(await Template.render('<%=\n 1 +\n 1 \n%>'), '2');
     t.equal(await Template.render('<%==\n 1 +\n 1 \n%>'), '2');
+
+    t.equal(await Template.render('<%= "hello" +\n\n" wo" +\n\n    "rld"\n%>'), 'hello world');
+    t.equal(await Template.render('<html><%= "<html>" %></html>'), '<html>&lt;html&gt;</html>');
+
+    t.equal(
+      await Template.render('<html><%= "<html>" %>\n%= "begin#&lt;"\n%== "begin#&lt;"\n</html>\n'),
+      '<html>&lt;html&gt;\nbegin#&amp;lt;\nbegin#&lt;\n</html>\n'
+    );
   });
 
   await t.test('Code', async t => {
@@ -35,6 +43,15 @@ t.test('Template', async t => {
   await t.test('Comments', async t => {
     t.equal(await Template.render('%#abc\n123\n%#\n'), '123\n');
     t.equal(await Template.render('<%#\na\nb\nc\n\n%>123<%#\n\n\n%>'), '123');
+
+    t.equal(await Template.render('<html>\n%# <%= 23 %>test<%= 24 %>\n</html>\n'), '<html>\n</html>\n');
+    t.equal(
+      await Template.render('<html><%# this is\na\ncomment %>this not\n%  if (true) {\n%= 23\n%  }\n</html>'),
+      '<html>this not\n23\n</html>'
+    );
+
+    t.equal(await Template.render('% if (true) {\nworks!\n% }   // tset'), 'works!\n');
+    t.equal(await Template.render('% if (true) { // test\nworks!\n% }   // tset\ngreat!\n'), 'works!\ngreat!\n');
   });
 
   await t.test('Replace code', async t => {
