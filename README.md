@@ -16,9 +16,15 @@ import Template from '@mojojs/template';
 const result = await Template.render('Hello <%= name %>!', {name: 'World'});
 
 // Compile a function for reuse
-const template = new Template('Hello <%= name%>!');
+const template = new Template('Hello <%= name %>!');
 const fn = template.compile();
 const result = await fn({name: 'World'});
+
+// Use a custom escape function and name
+const escape = function (input) { return `"${input}"` };
+const template = new Template('The date is <%= date.toString() %>', {escape, name: 'template.mt'});
+const fn = template.compile();
+const result = await fn({date: new Date()});
 ```
 
 ### Syntax
@@ -56,23 +62,8 @@ JavaScript lines can be indented freely.
 Expressions and code blocks can also be split up over multiple lines.
 
 ```
-<%
-  const message = 'Hello World';
-%>
-<%=
-  message
-%>!
-```
-
-The generated code for template functions is usually quite efficient, but to avoid possible syntax errors you should be
-aware of its general structure.
-
-```js
-try { with(__locals){ let __output = ''; __output += '\n';
-const message = 'Hello World';
-__output += message;
-__output += '!\n';
-return __output; } } catch (error) { __context(error, __source) }
+<%= 'Hello '
+    + randomName + '!' %>
 ```
 
 ### Debugging
@@ -94,6 +85,21 @@ Something went wrong...
     at Test.<anonymous> (file:///home/kraih/repo/template.js/test/template.js:191:24)
     at TapWrap.runInAsyncScope (node:async_hooks:199:9)
     ...
+```
+
+The generated code for template functions is usually quite efficient, but to avoid possible syntax errors it's good to
+be aware of its general structure.
+
+```
+<% const message = 'Hello World'; %>
+<%= message %>!
+```
+```js
+try { with(__locals){ let __output = '';
+const message = 'Hello World';
+__output += __escape(message);
+__output += '!\n';
+return __output; } } catch (error) { __context(error, __source) }
 ```
 
 ## Installation
