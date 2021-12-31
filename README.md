@@ -104,6 +104,10 @@ return __output; } } catch (error) { __context(error, __source) }
 
 You can set the `MOJO_TEMPLATE_DEBUG=1` environment variable to get the generated code printed to `STDERR`.
 
+### Editor Support
+
+* [Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=kraih.javascript-mt-support)
+
 ## Installation
 
 All you need is Node.js 16.0.0 (or newer).
