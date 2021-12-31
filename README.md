@@ -22,7 +22,7 @@ const result = await fn({name: 'World'});
 
 // Use a custom escape function and name
 const escape = function (input) { return `"${input}"` };
-const template = new Template('The date is <%= date.toString() %>', {escape, name: 'template.mt'});
+const template = new Template('Date: <%= date %>', {escape, name: 'now.mt'});
 const fn = template.compile();
 const result = await fn({date: new Date()});
 ```
