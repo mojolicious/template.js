@@ -37,7 +37,7 @@ All templates are compiled to `async` functions, so you can safely use `await`.
 <%== JavaScript expression, replaced with result %>
 <%# Comment, useful for debugging %>
 <%% Replaced with "<%", useful for generating templates %>
-% JavaScript code line, treated as "<% line %>"
+% JavaScript code line, treated as "<% line =%>" (explained later)
 %= JavaScript expression line, treated as "<%= line %>"
 %== JavaScript expression line, treated as "<%== line %>"
 %# Comment line, useful for debugging
@@ -64,6 +64,23 @@ Expressions and code blocks can also be split up over multiple lines.
 ```
 <div><%= 'Hello '
          + randomName + '!' %></div>
+```
+
+Newline characters after code and expression blocks can be trimmed by adding an additional equal sign to the end of a
+tag.
+
+```
+<% for (let i = 1; i <= 3; i++) { =%>
+  <%= 'The code blocks around this expression are not visible in the output' %>
+<% } =%>
+```
+
+Code lines are automatically trimmed and always completely invisible in the output.
+
+```
+% for (let i = 1; i <= 3; i++) {
+  <%= 'The code lines around this expression are not visible in the output' %>
+% }
 ```
 
 ### Debugging

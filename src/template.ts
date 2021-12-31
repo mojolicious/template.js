@@ -32,7 +32,7 @@ const DEBUG = process.env.MOJO_TEMPLATE_DEBUG === '1';
 
 const LINE_RE = /^(\s*)%(%|#|={1,2})?(.*?)$/;
 const START_RE = /(.*?)<%(%|#|={1,2})?/y;
-const END_RE = /(.*?)%>/y;
+const END_RE = /(.*?)(=)?%>/y;
 const STACK_RE = /at eval.+eval at compile.+template\.ts:\d+:\d+.+<anonymous>:(\d+):\d+/;
 
 /**
@@ -149,12 +149,15 @@ function escapeText(text: string): string {
 function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; nextOp: Op} {
   const nodes: AST = [];
 
+  let trim = false;
+  const length = line.length;
   const sticky = {offset: 0, value: line};
-  while (line.length > sticky.offset) {
+  while (length > sticky.offset) {
     // Tag end
     if (op !== 'text') {
       const endMatch = stickyMatch(sticky, END_RE);
       if (endMatch !== null) {
+        if (endMatch[2] === '=' && length === sticky.offset) trim = true;
         appendNodes(nodes, {op, value: endMatch[1]}, {op: 'end', value: ''});
         op = 'text';
         continue;
@@ -205,7 +208,7 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
   }
 
   // Newline
-  if (op === 'text' && isLastLine === false) appendNodes(nodes, {op, value: '\n'});
+  if (op === 'text' && trim === false && isLastLine === false) appendNodes(nodes, {op, value: '\n'});
 
   return {nodes, nextOp: op};
 }

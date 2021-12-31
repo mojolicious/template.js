@@ -55,6 +55,21 @@ t.test('Template', async t => {
     t.equal(await Template.render('% if (true) { // test\nworks!\n% }   // tset\ngreat!\n'), 'works!\ngreat!\n');
   });
 
+  await t.test('Trim', async t => {
+    t.equal(await Template.render('<%= 1 + 1 %>\n'), '2\n');
+    t.equal(await Template.render(' <%= 1 + 1 =%> \n'), ' 2 \n');
+
+    t.equal(await Template.render('<%= 1 + 1 =%>\n'), '2');
+    t.equal(await Template.render('<%== 1 + 1 =%>\n'), '2');
+    t.equal(await Template.render('  <%= 1 + 1 =%>\n'), '  2');
+    t.equal(await Template.render('  <%== 1 + 1 =%>\n'), '  2');
+
+    t.equal(await Template.render('<% const foo = 1 + 1; %>\n<%= foo %>\n'), '\n2\n');
+    t.equal(await Template.render('<% const foo = 1 + 1; =%>\n<%= foo =%>\n'), '2');
+
+    t.equal(await Template.render('<% for (let i = 1; i <= 3; i++) { =%>\n<%= i %>\n<% } =%>'), '1\n2\n3\n');
+  });
+
   await t.test('Replace code', async t => {
     t.equal(await Template.render('<%% 1 + 1 %>'), '<% 1 + 1 %>');
     t.equal(await Template.render('%% const foo = 23;'), '% const foo = 23;');
