@@ -58,7 +58,7 @@ export default class Template {
     const source = this._source;
     const escape = this._escape;
 
-    if (DEBUG === true) console.warn(`-- Template (${source.name})\n${code}`);
+    if (DEBUG === true) process.stderr.write(`-- Template (${source.name})\n${code}`);
 
     try {
       const fn = new AsyncFunction('__locals', '__source', '__context', '__escape', code);
