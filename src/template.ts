@@ -39,16 +39,18 @@ const STACK_RE = /at eval.+eval at _compileFn.+template\.ts:\d+:\d+.+<anonymous>
  * Template class.
  */
 export default class Template {
-  _fn: TemplateFunction;
+  _escape: EscapeFunction;
+  _fn: TemplateFunction | undefined;
+  _source: Source;
 
-  constructor(template: string | TemplateFunction, options: TemplateOptions = {}) {
+  constructor(template: string | Template, options: TemplateOptions = {}) {
     if (typeof template === 'string') {
-      const escape = options.escape ?? xmlEscape;
-      const lines = template.split('\n');
-      const source = {lines, name: options.name ?? 'template'};
-      this._fn = this._compileFn(compileTemplate(parseTemplate(lines)), escape, source);
+      this._escape = options.escape ?? xmlEscape;
+      this._source = {lines: template.split('\n'), name: options.name ?? 'template'};
     } else {
-      this._fn = template;
+      this._escape = options.escape ?? template._escape;
+      const source = template._source;
+      this._source = {lines: source.lines, name: options.name ?? source.name};
     }
   }
 
@@ -56,18 +58,29 @@ export default class Template {
    * Compile template to an async function.
    */
   compile(): TemplateFunction {
+    if (this._fn === undefined) {
+      const source = this._source;
+      this._fn = this._compileFn(compileTemplate(parseTemplate(source.lines)), this._escape, source);
+    }
     return this._fn;
   }
 
   /**
    * Render template.
    */
+  render(data: Record<string, any> = {}): Promise<string> {
+    return this.compile()(data);
+  }
+
+  /**
+   * Render template.
+   */
   static render(
-    template: string | TemplateFunction,
+    template: string | Template,
     data: Record<string, any> = {},
     options?: TemplateOptions
   ): Promise<string> {
-    return new Template(template, options)._fn(data);
+    return new Template(template, options).compile()(data);
   }
 
   _compileFn(code: string, escape: EscapeFunction, source: Source): TemplateFunction {
@@ -85,12 +98,12 @@ export default class Template {
   }
 }
 
-export function mt(strings: string[], ...values: string[]): TemplateFunction {
+export function mt(strings: string[], ...values: string[]): Template {
   let template = '';
   for (let i = 0; i < strings.length; i++) {
     template += strings[i] ?? '' + values[i] ?? '';
   }
-  return new Template(template).compile();
+  return new Template(template);
 }
 
 function appendNodes(ast: AST, ...nodes: AST): void {

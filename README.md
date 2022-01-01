@@ -34,7 +34,8 @@ template literal available.
 import {mt} from '@mojojs/template';
 
 const template = mt`Hello <%= name %>!`;
-const result = await template({name: 'World'});
+const fn = template.compile();
+const result = await fn({name: 'World'});
 ```
 
 ### Syntax
