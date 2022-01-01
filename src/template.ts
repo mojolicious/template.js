@@ -93,7 +93,7 @@ export default class Template {
       };
     } catch (error) {
       if (error instanceof SyntaxError) error.message += ` in ${source.name}`;
-      throw error;
+      throw throwWithContext(error as Error, source);
     }
   }
 }
