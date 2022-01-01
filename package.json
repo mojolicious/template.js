@@ -1,6 +1,6 @@
 {
   "name": "@mojojs/template",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Very fast embedded JavaScript templates",
   "keywords": [
     "template",
