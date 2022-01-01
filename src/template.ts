@@ -46,7 +46,7 @@ export default class Template {
   constructor(template: string | Template, options: TemplateOptions = {}) {
     if (typeof template === 'string') {
       this._escape = options.escape ?? xmlEscape;
-      this._source = {lines: template.split('\n'), name: options.name ?? 'template'};
+      this._source = {lines: template.split(/\r?\n/), name: options.name ?? 'template'};
     } else {
       this._escape = options.escape ?? template._escape;
       const source = template._source;
