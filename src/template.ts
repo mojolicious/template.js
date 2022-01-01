@@ -33,31 +33,44 @@ const DEBUG = process.env.MOJO_TEMPLATE_DEBUG === '1';
 const LINE_RE = /^(\s*)%(%|#|={1,2})?(.*?)$/;
 const START_RE = /(.*?)<%(%|#|={1,2})?/y;
 const END_RE = /(.*?)(=)?%>/y;
-const STACK_RE = /at eval.+eval at compile.+template\.ts:\d+:\d+.+<anonymous>:(\d+):\d+/;
+const STACK_RE = /at eval.+eval at _compileFn.+template\.ts:\d+:\d+.+<anonymous>:(\d+):\d+/;
 
 /**
  * Template class.
  */
 export default class Template {
-  _ast: AST;
-  _escape: EscapeFunction;
-  _source: Source;
+  _fn: TemplateFunction;
 
-  constructor(source: string, options: TemplateOptions = {}) {
-    this._escape = options.escape ?? xmlEscape;
-    const lines = source.split('\n');
-    this._source = {lines, name: options.name ?? 'template'};
-    this._ast = parseTemplate(lines);
+  constructor(template: string | TemplateFunction, options: TemplateOptions = {}) {
+    if (typeof template === 'string') {
+      const escape = options.escape ?? xmlEscape;
+      const lines = template.split('\n');
+      const source = {lines, name: options.name ?? 'template'};
+      this._fn = this._compileFn(compileTemplate(parseTemplate(lines)), escape, source);
+    } else {
+      this._fn = template;
+    }
   }
 
   /**
    * Compile template to an async function.
    */
   compile(): TemplateFunction {
-    const code = compileTemplate(this._ast);
-    const source = this._source;
-    const escape = this._escape;
+    return this._fn;
+  }
 
+  /**
+   * Render template.
+   */
+  static render(
+    template: string | TemplateFunction,
+    data: Record<string, any> = {},
+    options?: TemplateOptions
+  ): Promise<string> {
+    return new Template(template, options)._fn(data);
+  }
+
+  _compileFn(code: string, escape: EscapeFunction, source: Source): TemplateFunction {
     if (DEBUG === true) process.stderr.write(`-- Template (${source.name})\n${code}`);
 
     try {
@@ -70,13 +83,14 @@ export default class Template {
       throw error;
     }
   }
+}
 
-  /**
-   * Render template.
-   */
-  static render(source: string, data: Record<string, any> = {}, options?: TemplateOptions): Promise<string> {
-    return new Template(source, options).compile()(data);
+export function mt(strings: string[], ...values: string[]): TemplateFunction {
+  let template = '';
+  for (let i = 0; i < strings.length; i++) {
+    template += strings[i] ?? '' + values[i] ?? '';
   }
+  return new Template(template).compile();
 }
 
 function appendNodes(ast: AST, ...nodes: AST): void {

@@ -1,4 +1,4 @@
-import Template from '../lib/template.js';
+import Template, {mt} from '../lib/template.js';
 import t from 'tap';
 
 t.test('Template', async t => {
@@ -53,6 +53,12 @@ t.test('Template', async t => {
 
     t.equal(await Template.render('% if (true) {\nworks!\n% }   // tset'), 'works!\n');
     t.equal(await Template.render('% if (true) { // test\nworks!\n% }   // tset\ngreat!\n'), 'works!\ngreat!\n');
+  });
+
+  await t.test('Tagged template literal', async t => {
+    t.equal(await Template.render(mt`<html><%= "<html>" %></html>`), '<html>&lt;html&gt;</html>');
+    t.equal(await mt`<html><%= "<html>" %></html>`(), '<html>&lt;html&gt;</html>');
+    t.equal(await mt`<html><%= test %></html>`({test: 'works'}), '<html>works</html>');
   });
 
   await t.test('Trim', async t => {

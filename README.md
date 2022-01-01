@@ -27,6 +27,16 @@ const fn = template.compile();
 const result = await fn({date: new Date()});
 ```
 
+For easier syntax highlighting of templates embedded in JavaScript and TypeScript code, there is also an `mt` tagged
+template literal available.
+
+```js
+import {mt} from '@mojojs/template';
+
+const template = mt`Hello <%= name %>!`;
+const result = await template({name: 'World'});
+```
+
 ### Syntax
 
 All templates are compiled to `async` functions, so you can safely use `await`.
