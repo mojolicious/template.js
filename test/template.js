@@ -57,8 +57,15 @@ t.test('Template', async t => {
 
   await t.test('Tagged template literal', async t => {
     t.equal(await Template.render(mt`<html><%= "<html>" %></html>`), '<html>&lt;html&gt;</html>');
+    t.equal(await new Template(mt`<html><%= "<html>" %></html>`).render(), '<html>&lt;html&gt;</html>');
+
     t.equal(await mt`<html><%= "<html>" %></html>`.render(), '<html>&lt;html&gt;</html>');
-    t.equal(await mt`<html><%= test %></html>`.compile()({test: 'works'}), '<html>works</html>');
+    t.equal(await mt`<html><%= test %></html>`.render({test: 'works'}), '<html>works</html>');
+
+    const fn = mt`<html><%= test %></html>`.compile();
+    t.equal(await fn({test: 'this'}), '<html>this</html>');
+    t.equal(await fn({test: 'works'}), '<html>works</html>');
+    t.equal(await fn({test: 'too'}), '<html>too</html>');
   });
 
   await t.test('Trim', async t => {

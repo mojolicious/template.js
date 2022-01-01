@@ -1,6 +1,6 @@
 /*!
  * template.js
- * Copyright (C) 2021 Sebastian Riedel
+ * Copyright (C) 2021-2022 Sebastian Riedel
  * MIT Licensed
  */
 import {AsyncFunction, stickyMatch, xmlEscape} from './util.js';
