@@ -93,7 +93,7 @@ export default class Template {
       };
     } catch (error) {
       if (error instanceof SyntaxError) error.message += ` in ${source.name}`;
-      throw throwWithContext(error as Error, source);
+      throwWithContext(error as Error, source);
     }
   }
 }
@@ -312,7 +312,7 @@ function sanitizeExpr(expr: string): string {
   return expr.replace(/;\s*$/, '');
 }
 
-function throwWithContext(error: Error, source: Source): void {
+function throwWithContext(error: Error, source: Source): never {
   const {lines, name} = source;
 
   const stack = error.stack ?? '';
