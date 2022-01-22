@@ -40,7 +40,7 @@ const STACK_RE = /at eval.+eval at _compileFn.+template\.ts:\d+:\d+.+<anonymous>
  */
 export default class Template {
   _escape: EscapeFunction;
-  _fn: TemplateFunction | undefined;
+  _fn: TemplateFunction | undefined = undefined;
   _source: Source;
 
   constructor(template: string | Template, options: TemplateOptions = {}) {
