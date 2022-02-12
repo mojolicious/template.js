@@ -95,7 +95,7 @@ Code lines are automatically trimmed and always completely invisible in the outp
 ```
 
 You can capture whole template blocks as `async` functions for reuse later with `<{blockName}>` and `<{/blockName}>`
-tags. The use of named parameters is optional.
+tags. Just like code lines, the tags are automatically trimmed. The use of named parameters is optional.
 
 ```
 <{helloBlock(name)}>
