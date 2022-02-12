@@ -373,4 +373,36 @@ test
     const fn = template.compile();
     t.equal(await fn(), '+hi');
   });
+
+  await t.test('Blocks', async t => {
+    t.equal(await Template.render('<{foo}>Foo<{/foo}>foo:<%= await foo() %>'), 'foo:Foo');
+    t.equal(await Template.render('Test:<{foo}>Foo<{/foo}>foo:<%= await foo() %>'), 'Test:foo:Foo');
+    t.equal(await Template.render('<{foo}><%= 1 + 1 %><{/foo}><%= await foo() %><%= await foo() %>'), '22');
+
+    t.equal(await Template.render('<{foo(bar)}><%= bar %><{/foo}><%= await foo("a") %><%= await foo("b") %>'), 'ab');
+    t.equal(await Template.render('<{foo (bar)}><%= bar %><{/foo}><%= await foo("a") %><%= await foo("b") %>'), 'ab');
+    t.equal(await Template.render('<{foo(bar = "b")}><%= bar %><{/foo}><%= await foo("a") %><%= await foo() %>'), 'ab');
+    t.equal(await Template.render('<{foo(bar, baz)}><%= baz + bar %><{/foo}><%= await foo("x", "y") %>'), 'yx');
+
+    t.equal(await Template.render('<{foo()}>Foo<{/foo}>foo:<%= await foo() %>'), 'foo:Foo');
+  });
+
+  await t.test('Multi-line blocks', async t => {
+    const block = `
+<{foo}>
+  Foo
+  Bar
+<{/foo}>
+foo:<%= await foo() %>
+`;
+    t.equal(await Template.render(block), '\nfoo:  Foo\n  Bar\n\n');
+    const helloBlock = `
+<{hello(name)}>
+Hello <%= name %>.
+<{/hello}>
+<%= await hello('Baerbel') =%>
+<%= await hello('Wolfgang') =%>
+`;
+    t.equal(await Template.render(helloBlock), '\nHello Baerbel.\nHello Wolfgang.\n');
+  });
 });

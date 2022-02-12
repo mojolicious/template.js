@@ -94,6 +94,17 @@ Code lines are automatically trimmed and always completely invisible in the outp
 % }
 ```
 
+You can capture whole template blocks as `async` functions for reuse later with `<{blockName}>` and `<{/blockName}>`
+tags. The use of named parameters is optional.
+
+```
+<{helloBlock(name)}>
+  Hello <%= name %>.
+<{/helloBlock}>
+<%= await helloBlock('Baerbel') %>
+<%= await helloBlock('Wolfgang') %>
+```
+
 ### Debugging
 
 To help with debugging, all thrown exceptions are expanded with context information whenever possible. This does not
@@ -119,15 +130,14 @@ The generated code for template functions is usually quite efficient, but to avo
 be aware of its general structure.
 
 ```
-<% const message = 'Hello World'; %>
+<% const message = 'World'; %>
+Hello
 <%= message %>!
 ```
 ```js
-try { with(__locals){ let __output = '';
-const message = 'Hello World';
-__output += __escape(message);
-__output += '!\n';
-return __output; } } catch (error) { __context(error, __source) }
+try { with(__locals){ let __output = ''; const message = 'World';
+__output += 'Hello\n';
+__output += __escape(message); __output += '!\n'; return __output; } } catch (error) { __context(error, __source) }
 ```
 
 You can set the `MOJO_TEMPLATE_DEBUG=1` environment variable to get the generated code printed to `STDERR`.

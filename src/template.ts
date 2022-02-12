@@ -19,9 +19,10 @@ interface Source {
   name: string;
 }
 
-type Op = 'code' | 'comment' | 'end' | 'escape' | 'expression' | 'line' | 'text';
+type Op = 'blockStart' | 'blockEnd' | 'code' | 'comment' | 'end' | 'escape' | 'expression' | 'line' | 'text';
 
 interface ASTNode {
+  hints?: string;
   op: Op;
   value: string;
 }
@@ -33,6 +34,7 @@ const DEBUG = process.env.MOJO_TEMPLATE_DEBUG === '1';
 const LINE_RE = /^(\s*)%(%|#|={1,2})?(.*?)$/;
 const START_RE = /(.*?)<%(%|#|={1,2})?/y;
 const END_RE = /(.*?)(=)?%>/y;
+const BLOCK_RE = /^(.*?)<\{(\/?)(\w+)(?:\s*\(([^}]*)\))?\}>(.*?)$/;
 const STACK_RE = /at eval.+eval at _compileFn.+template\.ts:\d+:\d+.+<anonymous>:(\d+):\d+/;
 
 /**
@@ -156,6 +158,16 @@ function compileTemplate(ast: AST): string {
       source += node.value;
     }
 
+    // Block start
+    else if (op === 'blockStart') {
+      source += `const ${node.value} = async (${node.hints ?? ''}) => { let __output = '';`;
+    }
+
+    // Block end
+    else if (op === 'blockEnd') {
+      source += 'return __output; };';
+    }
+
     // Newline
     else if (op === 'line') {
       source += '\n';
@@ -171,6 +183,18 @@ function compileTemplate(ast: AST): string {
 
 function escapeText(text: string): string {
   return text.replaceAll('\\', '\\\\').replaceAll("'", "\\'").replaceAll('\n', '\\n').replaceAll('\r', '\\r');
+}
+
+function parseBlock(text: string, op: Op): AST {
+  if (text === '') return [];
+  if (op !== 'text') return [{op, value: text}];
+
+  const blockMatch = text.match(BLOCK_RE);
+  if (blockMatch === null) return [{op, value: text}];
+
+  const node: ASTNode = {op: blockMatch[2] === '/' ? 'blockEnd' : 'blockStart', value: blockMatch[3]};
+  if (blockMatch[4] !== '') node.hints = blockMatch[4];
+  return [...parseBlock(blockMatch[1], op), node, ...parseBlock(blockMatch[5], op)];
 }
 
 function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; nextOp: Op} {
@@ -200,7 +224,7 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
       if (startMatch !== null) {
         const leftovers = startMatch[1];
         const type = startMatch[2];
-        if (leftovers !== '') appendNodes(nodes, {op, value: leftovers});
+        if (leftovers !== '') appendNodes(nodes, ...parseBlock(leftovers, op));
 
         // Replacement
         if (type === '%') {
@@ -228,10 +252,16 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
           appendNodes(nodes, {op, value: ''});
         }
       } else {
-        appendNodes(nodes, {op, value: line.slice(sticky.offset)});
+        appendNodes(nodes, ...parseBlock(line.slice(sticky.offset), op));
         sticky.offset = line.length;
       }
     }
+  }
+
+  // Trim blocks
+  if (nodes.length > 0) {
+    const lastOp = nodes[nodes.length - 1].op;
+    if (lastOp === 'blockStart' || lastOp === 'blockEnd') trim = true;
   }
 
   // Newline
