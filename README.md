@@ -94,8 +94,9 @@ Code lines are automatically trimmed and always completely invisible in the outp
 % }
 ```
 
-You can capture whole template blocks as `async` functions for reuse later with `<{blockName}>` and `<{/blockName}>`
-tags. Just like code lines, the tags are automatically trimmed. The use of named parameters is optional.
+You can also capture whole template blocks as `async` functions for reuse later with `<{blockName}>` and
+`<{/blockName}>` tags. Similar to code lines, these tags are automatically trimmed and invisible in the output. The use
+of named parameters is optional.
 
 ```
 <{helloBlock(name)}>
@@ -127,7 +128,7 @@ Something went wrong...
 ```
 
 The generated code for template functions is usually quite efficient, but to avoid possible syntax errors it's good to
-be aware of its general structure.
+be aware of its general structure. Especially with regard to where the use of semicolons is required.
 
 ```
 <% const message = 'World'; %>
