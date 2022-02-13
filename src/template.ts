@@ -3,7 +3,7 @@
  * Copyright (C) 2021-2022 Sebastian Riedel
  * MIT Licensed
  */
-import {AsyncFunction, stickyMatch, xmlEscape} from './util.js';
+import {AsyncFunction, SafeString, stickyMatch, xmlEscape} from './util.js';
 export * from './util.js';
 
 type EscapeFunction = (text: string) => string;
@@ -89,9 +89,9 @@ export default class Template {
     if (DEBUG === true) process.stderr.write(`-- Template (${source.name})\n${code}`);
 
     try {
-      const fn = new AsyncFunction('__locals', '__source', '__context', '__escape', code);
+      const fn = new AsyncFunction('__locals', '__source', '__context', '__escape', '__safe', code);
       return function (data = {}): Promise<string> {
-        return fn.apply(null, [data, source, throwWithContext, escape]);
+        return fn.apply(null, [data, source, throwWithContext, escape, safe]);
       };
     } catch (error) {
       if (error instanceof SyntaxError) error.message += ` in ${source.name}`;
@@ -165,7 +165,7 @@ function compileTemplate(ast: AST): string {
 
     // Block end
     else if (op === 'blockEnd') {
-      source += 'return __output; };';
+      source += 'return __safe(__output); };';
     }
 
     // Newline
@@ -336,6 +336,10 @@ function parseTemplate(lines: string[]): AST {
   }
 
   return ast;
+}
+
+function safe(safe: string): SafeString {
+  return new SafeString(safe);
 }
 
 function sanitizeExpr(expr: string): string {
