@@ -106,6 +106,8 @@ of named parameters is optional.
 <%= await helloBlock('Wolfgang') %>
 ```
 
+To generate template blocks you can use `<{{blockName}}>` and `<{{/blockName}}>` tags.
+
 ### Debugging
 
 To help with debugging, all thrown exceptions are expanded with context information whenever possible. This does not

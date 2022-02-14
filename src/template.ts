@@ -34,8 +34,11 @@ const DEBUG = process.env.MOJO_TEMPLATE_DEBUG === '1';
 const LINE_RE = /^(\s*)%(%|#|={1,2})?(.*?)$/;
 const START_RE = /(.*?)<%(%|#|={1,2})?/y;
 const END_RE = /(.*?)(=)?%>/y;
-const BLOCK_RE = /^(.*?)<\{(\/?)(\w+)(?:\s*\(([^}]*)\))?\}>(.*?)$/;
 const STACK_RE = /at eval.+eval at _compileFn.+template\.ts:\d+:\d+.+<anonymous>:(\d+):\d+/;
+
+const BLOCK_NAME = '(/?)(\\w+)(?:\\s*\\(([^}]*)\\))?';
+const BLOCK_RE = new RegExp(`^(.*?)<\\{${BLOCK_NAME}\\}>(.*?)$`);
+const BLOCK_REPLACE_RE = new RegExp(`<\\{\\{${BLOCK_NAME}\\}\\}>`, 'g');
 
 /**
  * Template class.
@@ -119,6 +122,10 @@ function appendNodes(ast: AST, ...nodes: AST): void {
   }
 }
 
+function blockReplace(...match: RegExpMatchArray): string {
+  return '<{' + match[1] + (match[3] === undefined ? match[2] : `${match[2]}(${match[3]})`) + '}>';
+}
+
 function compileTemplate(ast: AST): string {
   let source = '';
 
@@ -190,7 +197,7 @@ function parseBlock(text: string, op: Op): AST {
   if (op !== 'text') return [{op, value: text}];
 
   const blockMatch = text.match(BLOCK_RE);
-  if (blockMatch === null) return [{op, value: text}];
+  if (blockMatch === null) return [{op, value: text.replaceAll(BLOCK_REPLACE_RE, blockReplace)}];
 
   const node: ASTNode = {op: blockMatch[2] === '/' ? 'blockEnd' : 'blockStart', value: blockMatch[3]};
   if (blockMatch[4] !== '') node.hints = blockMatch[4];

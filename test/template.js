@@ -407,4 +407,33 @@ Hello <%= name %>.
 `;
     t.equal(await Template.render(helloBlock), '\nHello Baerbel.\nHello Wolfgang.\n');
   });
+
+  await t.test('Replace blocks', async t => {
+    const block = `
+<{{foo}}>
+  Foo
+<{{/foo}}>
+foo:<%%= await foo() %>
+`;
+    t.equal(await Template.render(block), '\n<{foo}>\n  Foo\n<{/foo}>\nfoo:<%= await foo() %>\n');
+
+    t.equal(
+      await Template.render('<{{foo}}>Foo<{{/foo}}>foo:<%%= await foo() %>'),
+      '<{foo}>Foo<{/foo}>foo:<%= await foo() %>'
+    );
+    t.equal(
+      await Template.render('<{{foo(bar)}}><%%= bar %><{{/foo}}><%%= await foo("a") %><%%= await foo("b") %>'),
+      '<{foo(bar)}><%= bar %><{/foo}><%= await foo("a") %><%= await foo("b") %>'
+    );
+    t.equal(
+      await Template.render('<{{foo()}}>Foo<{{/foo}}>foo:<%%= await foo() %>'),
+      '<{foo()}>Foo<{/foo}>foo:<%= await foo() %>'
+    );
+
+    t.equal(await Template.render('<{{foo()'), '<{{foo()');
+    t.equal(await Template.render('<{{foo()}>'), '<{{foo()}>');
+    t.equal(await Template.render('foo}}>'), 'foo}}>');
+    t.equal(await Template.render('foo}>'), 'foo}>');
+    t.equal(await Template.render('<{{...}}>'), '<{{...}}>');
+  });
 });
