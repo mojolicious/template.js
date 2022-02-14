@@ -212,15 +212,21 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
   const length = line.length;
   const sticky = {offset: 0, value: line};
   while (length > sticky.offset) {
-    // Tag end
     if (op !== 'text') {
+      // Tag end
       const endMatch = stickyMatch(sticky, END_RE);
       if (endMatch !== null) {
-        if (endMatch[2] === '=' && length === sticky.offset) trim = true;
+        if (endMatch[2] === '=' && length === sticky.offset) {
+          trimTextBefore(nodes);
+          trim = true;
+        }
         appendNodes(nodes, {op, value: endMatch[1]}, {op: 'end', value: ''});
         op = 'text';
         continue;
-      } else {
+      }
+
+      // Continuation
+      else {
         appendNodes(nodes, {op, value: line.slice(sticky.offset)});
         sticky.offset = line.length;
       }
@@ -375,4 +381,11 @@ function throwWithContext(error: Error, source: Source): never {
   error.message = `${name}:${line}\n${context.join('\n')}\n\n${error.message}`;
 
   throw error;
+}
+
+function trimTextBefore(nodes: AST): void {
+  const previous = nodes.length - 2;
+  if (previous < 0) return;
+  const node = nodes[previous];
+  if (node.op === 'text') node.value = node.value.trimEnd();
 }

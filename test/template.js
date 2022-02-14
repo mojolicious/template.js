@@ -28,6 +28,11 @@ t.test('Template', async t => {
     t.equal(await Template.render('<%=\n 1 +\n 1 \n%>'), '2');
     t.equal(await Template.render('<%==\n 1 +\n 1 \n%>'), '2');
 
+    t.equal(await Template.render('<%=\n 1 +\n 1 \n=%>\n'), '2');
+    console.warn('before');
+    t.equal(await Template.render('<%= 1 + 1 =%> + <%= 1 + 2 %> = 5\n'), '2 + 3 = 5\n');
+    console.warn('after');
+
     t.equal(await Template.render('<%= "hello" +\n\n" wo" +\n\n    "rld"\n%>'), 'hello world');
     t.equal(await Template.render('<html><%= "<html>" %></html>'), '<html>&lt;html&gt;</html>');
 
@@ -75,8 +80,8 @@ t.test('Template', async t => {
 
     t.equal(await Template.render('<%= 1 + 1 =%>\n'), '2');
     t.equal(await Template.render('<%== 1 + 1 =%>\n'), '2');
-    t.equal(await Template.render('  <%= 1 + 1 =%>\n'), '  2');
-    t.equal(await Template.render('  <%== 1 + 1 =%>\n'), '  2');
+    t.equal(await Template.render('  <%= 1 + 1 =%>\n'), '2');
+    t.equal(await Template.render('  <%== 1 + 1 =%>\n'), '2');
 
     t.equal(await Template.render('<% const foo = 1 + 1; %>\n<%= foo %>\n'), '\n2\n');
     t.equal(await Template.render('<% const foo = 1 + 1; =%>\n<%= foo =%>\n'), '2');
@@ -415,7 +420,7 @@ foo:<%= await foo() %>
     <%= await hello('Baerbel') =%>
     <%= await hello('Wolfgang') =%>
     `;
-    t.equal(await Template.render(helloBlock), '\n          Hello Baerbel.\n          Hello Wolfgang.\n    ');
+    t.equal(await Template.render(helloBlock), '\n      Hello Baerbel.\n      Hello Wolfgang.\n    ');
   });
 
   await t.test('Replace blocks', async t => {

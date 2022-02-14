@@ -77,8 +77,7 @@ Expressions and code blocks can also be split up over multiple lines.
          + randomName + '!' %></div>
 ```
 
-Newline characters after code and expression blocks can be trimmed by adding an additional equal sign to the end of a
-tag.
+Whitespace characters around tags can be trimmed by adding an additional equal sign to the end of a tag.
 
 ```
 <% for (let i = 1; i <= 3; i++) { =%>
