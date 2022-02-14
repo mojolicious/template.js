@@ -387,6 +387,7 @@ test
     t.equal(await Template.render('<{foo()}>Foo<{/foo}>foo:<%= await foo() %>'), 'foo:Foo');
     t.equal(await Template.render('<{foo}><div>Foo</div><{/foo}>foo:<%= await foo() %>'), 'foo:<div>Foo</div>');
     t.equal(await Template.render('<{foo}><div>Foo</div><{/foo}>foo:<%== await foo() %>'), 'foo:<div>Foo</div>');
+    t.equal(await Template.render('  <{foo()}>Foo<{/foo}>foo:<%= await foo() =%>'), 'foo:Foo');
   });
 
   await t.test('Multi-line blocks', async t => {
@@ -399,15 +400,6 @@ foo:<%= await foo() %>
 `;
     t.equal(await Template.render(block), '\nfoo:  Foo\n  Bar\n\n');
 
-    const helloBlock = `
-<{hello(name)}>
-Hello <%= name %>.
-<{/hello}>
-<%= await hello('Baerbel') =%>
-<%= await hello('Wolfgang') =%>
-`;
-    t.equal(await Template.render(helloBlock), '\nHello Baerbel.\nHello Wolfgang.\n');
-
     const blocks = `
 <{foo}>Foo<{/foo}>
 <{bar}>Bar<{/bar}>
@@ -415,6 +407,15 @@ Hello <%= name %>.
 <%= await bar() =%>
     `;
     t.equal(await Template.render(blocks), '\nFooBar    ');
+
+    const helloBlock = `
+    <{hello(name)}>
+      Hello <%= name %>.
+    <{/hello}>
+    <%= await hello('Baerbel') =%>
+    <%= await hello('Wolfgang') =%>
+    `;
+    t.equal(await Template.render(helloBlock), '\n          Hello Baerbel.\n          Hello Wolfgang.\n    ');
   });
 
   await t.test('Replace blocks', async t => {

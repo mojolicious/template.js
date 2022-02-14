@@ -201,7 +201,11 @@ function parseBlock(text: string, op: Op): AST {
 
   const node: ASTNode = {op: blockMatch[2] === '/' ? 'blockEnd' : 'blockStart', value: blockMatch[3]};
   if (blockMatch[4] !== '') node.hints = blockMatch[4];
-  return [...parseBlock(blockMatch[1], op), node, ...parseBlock(blockMatch[5], op)];
+
+  const prefix = blockMatch[1];
+  const prefixNodes = prefix.match(/^\s*$/) ? [] : parseBlock(prefix, op);
+
+  return [...prefixNodes, node, ...parseBlock(blockMatch[5], op)];
 }
 
 function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; nextOp: Op} {
