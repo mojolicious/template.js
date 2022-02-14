@@ -387,7 +387,7 @@ test
     t.equal(await Template.render('<{foo()}>Foo<{/foo}>foo:<%= await foo() %>'), 'foo:Foo');
     t.equal(await Template.render('<{foo}><div>Foo</div><{/foo}>foo:<%= await foo() %>'), 'foo:<div>Foo</div>');
     t.equal(await Template.render('<{foo}><div>Foo</div><{/foo}>foo:<%== await foo() %>'), 'foo:<div>Foo</div>');
-    t.equal(await Template.render('  <{foo()}>Foo<{/foo}>foo:<%= await foo() =%>'), 'foo:Foo');
+    t.equal(await Template.render('  <{foo()}>Foo<{/foo}>  foo:<%= await foo() =%>'), 'foo:Foo');
   });
 
   await t.test('Multi-line blocks', async t => {
