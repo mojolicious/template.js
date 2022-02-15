@@ -202,7 +202,7 @@ function parseBlock(text: string, op: Op): AST {
   const node: ASTNode = {op: blockMatch[2] === '/' ? 'blockEnd' : 'blockStart', value: blockMatch[3]};
   if (blockMatch[4] !== '') node.hints = blockMatch[4];
 
-  return [...parseBlock(blockMatch[1].trimEnd(), op), node, ...parseBlock(blockMatch[5].trimStart(), op)];
+  return [...parseBlock(blockMatch[1].trimEnd(), op), node, ...parseBlock(blockMatch[5], op)];
 }
 
 function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; nextOp: Op} {

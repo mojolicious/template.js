@@ -29,9 +29,7 @@ t.test('Template', async t => {
     t.equal(await Template.render('<%==\n 1 +\n 1 \n%>'), '2');
 
     t.equal(await Template.render('<%=\n 1 +\n 1 \n=%>\n'), '2');
-    console.warn('before');
     t.equal(await Template.render('<%= 1 + 1 =%> + <%= 1 + 2 %> = 5\n'), '2 + 3 = 5\n');
-    console.warn('after');
 
     t.equal(await Template.render('<%= "hello" +\n\n" wo" +\n\n    "rld"\n%>'), 'hello world');
     t.equal(await Template.render('<html><%= "<html>" %></html>'), '<html>&lt;html&gt;</html>');
@@ -392,7 +390,7 @@ test
     t.equal(await Template.render('<{foo()}>Foo<{/foo}>foo:<%= await foo() %>'), 'foo:Foo');
     t.equal(await Template.render('<{foo}><div>Foo</div><{/foo}>foo:<%= await foo() %>'), 'foo:<div>Foo</div>');
     t.equal(await Template.render('<{foo}><div>Foo</div><{/foo}>foo:<%== await foo() %>'), 'foo:<div>Foo</div>');
-    t.equal(await Template.render('  <{foo()}>Foo<{/foo}>  foo:<%= await foo() =%>'), 'foo:Foo');
+    t.equal(await Template.render('  <{foo()}>Foo<{/foo}>foo:<%= await foo() =%>'), 'foo:Foo');
   });
 
   await t.test('Multi-line blocks', async t => {
