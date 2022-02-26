@@ -10,17 +10,7 @@ export const AsyncFunction = Object.getPrototypeOf(async function () {
   // We only care about side effects
 }).constructor;
 
-export class SafeString {
-  _safe: string;
-
-  constructor(safe: string) {
-    this._safe = safe;
-  }
-
-  toString(): string {
-    return this._safe;
-  }
-}
+export class SafeString extends String {}
 
 export function stickyMatch(
   stringWithOffset: {offset: number; value: string},
