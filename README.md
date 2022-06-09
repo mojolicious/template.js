@@ -149,7 +149,7 @@ You can set the `MOJO_TEMPLATE_DEBUG=1` environment variable to get the generate
 
 ### Editor Support
 
-* [Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=kraih.javascript-mt-support)
+* [Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=kraih.javascript-tmpl-support)
 
 ## Installation
 
