@@ -25,18 +25,18 @@ const result = await fn({name: 'World'});
 
 // Use a custom escape function and name
 const escape = function (input) { return `"${input}"` };
-const template = new Template('Date: <%= date %>', {escape, name: 'now.mt'});
+const template = new Template('Date: <%= date %>', {escape, name: 'now.tmpl'});
 const fn = template.compile();
 const result = await fn({date: new Date()});
 ```
 
-For easier syntax highlighting of templates embedded in JavaScript and TypeScript code, there is also an `mt` tagged
+For easier syntax highlighting of templates embedded in JavaScript and TypeScript code, there is also an `tmpl` tagged
 template literal available.
 
 ```js
-import {mt} from '@mojojs/template';
+import {tmpl} from '@mojojs/template';
 
-const template = mt`Hello <%= name %>!`;
+const template = tmpl`Hello <%= name %>!`;
 const fn = template.compile();
 const result = await fn({name: 'World'});
 ```

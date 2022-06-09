@@ -103,7 +103,7 @@ export default class Template {
   }
 }
 
-export function mt(strings: string[], ...values: string[]): Template {
+export function tmpl(strings: string[], ...values: string[]): Template {
   let template = '';
   for (let i = 0; i < strings.length; i++) {
     template += strings[i] ?? '' + values[i] ?? '';

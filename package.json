@@ -5,6 +5,7 @@
   "keywords": [
     "template",
     "engine",
+    "tmpl",
     "ejs"
   ],
   "author": "Sebastian Riedel <kraih@mojolicious.org>",

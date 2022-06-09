@@ -1,4 +1,4 @@
-import Template, {mt} from '../lib/template.js';
+import Template, {tmpl} from '../lib/template.js';
 import t from 'tap';
 
 t.test('Template', async t => {
@@ -60,13 +60,13 @@ t.test('Template', async t => {
   });
 
   await t.test('Tagged template literal', async t => {
-    t.equal(await Template.render(mt`<html><%= "<html>" %></html>`), '<html>&lt;html&gt;</html>');
-    t.equal(await new Template(mt`<html><%= "<html>" %></html>`).render(), '<html>&lt;html&gt;</html>');
+    t.equal(await Template.render(tmpl`<html><%= "<html>" %></html>`), '<html>&lt;html&gt;</html>');
+    t.equal(await new Template(tmpl`<html><%= "<html>" %></html>`).render(), '<html>&lt;html&gt;</html>');
 
-    t.equal(await mt`<html><%= "<html>" %></html>`.render(), '<html>&lt;html&gt;</html>');
-    t.equal(await mt`<html><%= test %></html>`.render({test: 'works'}), '<html>works</html>');
+    t.equal(await tmpl`<html><%= "<html>" %></html>`.render(), '<html>&lt;html&gt;</html>');
+    t.equal(await tmpl`<html><%= test %></html>`.render({test: 'works'}), '<html>works</html>');
 
-    const fn = mt`<html><%= test %></html>`.compile();
+    const fn = tmpl`<html><%= test %></html>`.compile();
     t.equal(await fn({test: 'this'}), '<html>this</html>');
     t.equal(await fn({test: 'works'}), '<html>works</html>');
     t.equal(await fn({test: 'too'}), '<html>too</html>');
@@ -354,7 +354,7 @@ test
     });
 
     await t.test('Exception with different name', async t => {
-      const template = new Template('<% throw new Error("works!"); %>', {name: 'src/template.mt'});
+      const template = new Template('<% throw new Error("works!"); %>', {name: 'src/template.tmpl'});
       const fn = template.compile();
       let result;
       try {
@@ -363,7 +363,7 @@ test
         result = error;
       }
       t.match(result, / >> 1| <% throw new Error("works!") %>/);
-      t.match(result, /src\/template\.mt/);
+      t.match(result, /src\/template\.tmpl/);
     });
   });
 
