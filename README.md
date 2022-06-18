@@ -8,6 +8,7 @@
 </p>
 
 [![](https://github.com/mojolicious/template.js/workflows/test/badge.svg)](https://github.com/mojolicious/template.js/actions)
+[![Coverage Status](https://coveralls.io/repos/github/mojolicious/template.js/badge.svg?branch=main)](https://coveralls.io/github/mojolicious/template.js?branch=main)
 [![npm](https://img.shields.io/npm/v/@mojojs/template.svg)](https://www.npmjs.com/package/@mojojs/template)
 
 A very fast embedded JavaScript template engine for [Node.js](https://nodejs.org/). Written in TypeScript.
