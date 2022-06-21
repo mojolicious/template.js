@@ -3,8 +3,8 @@
  * Copyright (C) 2021-2022 Sebastian Riedel
  * MIT Licensed
  */
-import {AsyncFunction, SafeString, stickyMatch, xmlEscape} from './util.js';
-export * from './util.js';
+import {SafeString, stickyMatch, xmlEscape} from '@mojojs/util';
+export * from '@mojojs/util';
 
 type EscapeFunction = (text: string) => string;
 type TemplateFunction = (data?: Record<string, any>) => Promise<string>;
@@ -39,6 +39,10 @@ const STACK_RE = /at eval.+eval at _compileFn.+template\.ts:\d+:\d+.+<anonymous>
 const BLOCK_NAME = '(/?)(\\w+)(?:\\s*\\(([^}]*)\\))?';
 const BLOCK_RE = new RegExp(`^(.*?)<\\{${BLOCK_NAME}\\}>(.*?)$`);
 const BLOCK_REPLACE_RE = new RegExp(`<\\{\\{${BLOCK_NAME}\\}\\}>`, 'g');
+
+const AsyncFunction = Object.getPrototypeOf(async function () {
+  // We only care about side effects
+}).constructor;
 
 /**
  * Template class.
