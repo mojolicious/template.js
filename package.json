@@ -3,6 +3,7 @@
   "version": "2.1.0",
   "description": "Very fast embedded JavaScript templates",
   "keywords": [
+    "mojojs",
     "template",
     "engine",
     "tmpl",
