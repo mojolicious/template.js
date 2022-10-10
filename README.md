@@ -152,6 +152,8 @@ You can set the `MOJO_TEMPLATE_DEBUG=1` environment variable to get the generate
 
 * [Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=kraih.javascript-tmpl-support)
 
+* [VSCodium](https://open-vsx.org/extension/kraih/javascript-tmpl-support)
+
 ## Installation
 
 All you need is Node.js 16.0.0 (or newer).
