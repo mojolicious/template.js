@@ -3,6 +3,7 @@
  * Copyright (C) 2021-2022 Sebastian Riedel
  * MIT Licensed
  */
+import vm from 'node:vm';
 import {SafeString, stickyMatch, xmlEscape} from '@mojojs/util';
 export * from '@mojojs/util';
 
@@ -34,7 +35,8 @@ const DEBUG = process.env.MOJO_TEMPLATE_DEBUG === '1';
 const LINE_RE = /^(\s*)%(%|#|={1,2})?(.*?)$/;
 const START_RE = /(.*?)<%(%|#|={1,2})?/y;
 const END_RE = /(.*?)(=)?%>/y;
-const STACK_RE = /at eval.+eval at _compileFn.+template\.ts:\d+:\d+.+<anonymous>:(\d+):\d+/;
+const EVAL_STACK_RE = /at eval.+eval at _compileFn.+template\.ts:\d+:\d+.+<anonymous>:(\d+):\d+/;
+const VM_STACK_RE = /evalmachine.<anonymous>:(\d+)/;
 
 const BLOCK_NAME = '(/?)(\\w+)(?:\\s*\\(([^}]*)\\))?';
 const BLOCK_RE = new RegExp(`^(.*?)<\\{${BLOCK_NAME}\\}>(.*?)$`);
@@ -96,12 +98,20 @@ export default class Template {
     if (DEBUG === true) process.stderr.write(`-- Template (${source.name})\n${code}`);
 
     try {
-      const fn = new AsyncFunction('__locals', '__source', '__context', '__escape', '__safe', code);
+      const safeCode = `try { ${code} } catch (error) { __context(error, __source) }`;
+      const fn = new AsyncFunction('__locals', '__source', '__context', '__escape', '__safe', safeCode);
       return function (data = {}): Promise<string> {
         return fn.apply(null, [data, source, throwWithContext, escape, safe]);
       };
     } catch (error) {
-      if (error instanceof SyntaxError) error.message += ` in ${source.name}`;
+      // Use a vm to get the line number for syntax errors
+      if (error instanceof SyntaxError) {
+        try {
+          vm.runInNewContext(`async function template (__locals, __source, __context, __escape, __safe) {${code}}`);
+        } catch (error: any) {
+          throwWithContext(error, source);
+        }
+      }
       throwWithContext(error as Error, source);
     }
   }
@@ -187,7 +197,6 @@ function compileTemplate(ast: AST): string {
 
   source = `let __output = ''; ${source} return __output;`;
   source = `with(__locals){ ${source} }`;
-  source = `try { ${source} } catch (error) { __context(error, __source) }`;
 
   return source;
 }
@@ -368,9 +377,14 @@ function throwWithContext(error: Error, source: Source): never {
   const {lines, name} = source;
 
   const stack = error.stack ?? '';
-  const stackMatch = stack.match(STACK_RE);
-  if (stackMatch === null) throw error;
-  const line = parseInt(stackMatch[1]) - 2;
+  let offset = 2;
+  let stackMatch = stack.match(EVAL_STACK_RE);
+  if (stackMatch === null) {
+    offset = 0;
+    stackMatch = stack.match(VM_STACK_RE);
+    if (stackMatch === null) throw error;
+  }
+  const line = parseInt(stackMatch[1]) - offset;
 
   const start = Math.max(line - 3, 0);
   const end = Math.min(line + 2, lines.length);

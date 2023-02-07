@@ -170,9 +170,10 @@ foo
     await t.test('Syntax error', async t => {
       const exception = `
 test
+%= await "test";
 123
 456
-% if (true) {
+% if (true
 %= 1 + 1
 test
 `;
@@ -182,7 +183,28 @@ test
       } catch (error) {
         result = error;
       }
-      t.match(result, /SyntaxError: .+ in template/);
+      t.match(result.message, /template:7/);
+      t.match(result.message, / {4}5| 456/);
+      t.match(result.message, / {4}6| % if \(true/);
+      t.match(result.message, / >> 7| %= 1 + 1/);
+      t.match(result.message, / {4}8| test/);
+      t.match(result.message, / {4}9| /);
+
+      const exception2 = `
+test
+123
+456
+% if (true) {
+%= 1 + 1
+test
+`;
+      let result2;
+      try {
+        await Template.render(exception2);
+      } catch (error) {
+        result2 = error;
+      }
+      t.match(result2.message, /template:8/);
     });
 
     await t.test('Exception in template', async t => {
