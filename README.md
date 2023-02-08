@@ -11,7 +11,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/mojolicious/template.js/badge.svg?branch=main)](https://coveralls.io/github/mojolicious/template.js?branch=main)
 [![npm](https://img.shields.io/npm/v/@mojojs/template.svg)](https://www.npmjs.com/package/@mojojs/template)
 
-A very fast embedded JavaScript template engine for [Node.js](https://nodejs.org/). Written in TypeScript.
+A very fast embedded JavaScript template engine for server-side rendering (SSR) in [Node.js](https://nodejs.org/).
+Written in TypeScript.
 
 ```js
 import Template from '@mojojs/template';
@@ -41,6 +42,9 @@ const template = tmpl`Hello <%= name %>!`;
 const fn = template.compile();
 const result = await fn({name: 'World'});
 ```
+
+This module is designed specifically for all the small tasks that come up during big projects, like preprocessing
+config files. Not just to generate HTML or XML documents in web applications.
 
 ### Syntax
 
