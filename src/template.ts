@@ -42,10 +42,6 @@ const BLOCK_NAME = '(/?)(\\w+)(?:\\s*\\(([^}]*)\\))?';
 const BLOCK_RE = new RegExp(`^(.*?)<\\{${BLOCK_NAME}\\}>(.*?)$`);
 const BLOCK_REPLACE_RE = new RegExp(`<\\{\\{${BLOCK_NAME}\\}\\}>`, 'g');
 
-const AsyncFunction = Object.getPrototypeOf(async function () {
-  // We only care about side effects
-}).constructor;
-
 /**
  * Template class.
  */
@@ -98,20 +94,15 @@ export default class Template {
     if (DEBUG === true) process.stderr.write(`-- Template (${source.name})\n${code}`);
 
     try {
-      const safeCode = `try { ${code} } catch (error) { __context(error, __source) }`;
-      const fn = new AsyncFunction('__locals', '__source', '__context', '__escape', '__safe', safeCode);
+      // Compile to async function in a vm to get line numbers for syntax errors
+      const script = new vm.Script(
+        `async function template (__locals, __source, __context, __escape, __safe) {${code}}; template;`
+      );
+      const fn = script.runInThisContext();
       return function (data = {}): Promise<string> {
         return fn.apply(null, [data, source, throwWithContext, escape, safe]);
       };
     } catch (error) {
-      // Use a vm to get the line number for syntax errors
-      if (error instanceof SyntaxError) {
-        try {
-          vm.runInNewContext(`async function template (__locals, __source, __context, __escape, __safe) {${code}}`);
-        } catch (error: any) {
-          throwWithContext(error, source);
-        }
-      }
       throwWithContext(error as Error, source);
     }
   }
@@ -197,6 +188,7 @@ function compileTemplate(ast: AST): string {
 
   source = `let __output = ''; ${source} return __output;`;
   source = `with(__locals){ ${source} }`;
+  source = `try { ${source} } catch (error) { __context(error, __source) }`;
 
   return source;
 }

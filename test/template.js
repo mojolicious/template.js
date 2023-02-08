@@ -183,12 +183,12 @@ test
       } catch (error) {
         result = error;
       }
-      t.match(result.message, /template:7/);
-      t.match(result.message, / {4}5| 456/);
-      t.match(result.message, / {4}6| % if \(true/);
-      t.match(result.message, / >> 7| %= 1 + 1/);
-      t.match(result.message, / {4}8| test/);
-      t.match(result.message, / {4}9| /);
+      t.match(result, /template:7/);
+      t.match(result, / {4}5| 456/);
+      t.match(result, / {4}6| % if \(true/);
+      t.match(result, / >> 7| %= 1 + 1/);
+      t.match(result, / {4}8| test/);
+      t.match(result, / {4}9| /);
 
       const exception2 = `
 test
@@ -204,7 +204,7 @@ test
       } catch (error) {
         result2 = error;
       }
-      t.match(result2.message, /template:8/);
+      t.match(result2, /template:8/);
     });
 
     await t.test('Exception in template', async t => {
