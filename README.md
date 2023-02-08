@@ -113,8 +113,8 @@ To generate template blocks you can use `<{{blockName}}>` and `<{{/blockName}}>`
 
 ### Debugging
 
-To help with debugging, all thrown exceptions are expanded with context information whenever possible. This does not
-incur a performance penalty, and therfore does not need to be disabled in production.
+To help with debugging, all thrown exceptions as well as syntax errors are expanded with context information whenever
+possible. This does not incur a performance penalty, and therfore does not need to be disabled in production.
 
 ```
 Error: template:7
