@@ -96,7 +96,7 @@ export default class Template {
     try {
       // Compile to async function in a vm to get line numbers for syntax errors
       const script = new vm.Script(
-        `async function template (__locals, __source, __context, __escape, __safe) {${code}}; template;`
+        `async function __template (__locals, __source, __context, __escape, __safe) {${code}}; __template;`
       );
       const fn = script.runInThisContext();
       return function (data = {}): Promise<string> {
