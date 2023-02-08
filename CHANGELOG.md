@@ -3,6 +3,12 @@
 
 This package strictly follows [Semantic Versioning](https://semver.org).
 
+## v2.2.0 (2023-02-08)
+
+### Features
+
+  * Added context information support for syntax errors.
+
 ## v2.1.0 (2022-06-21)
 
 ### Features
