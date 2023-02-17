@@ -101,7 +101,9 @@ Code lines are automatically trimmed and always completely invisible in the outp
 % }
 ```
 
-You can also capture whole template blocks as `async` functions for reuse later with `<{blockName}>` and
+#### Named Blocks
+
+You can also capture whole template blocks as named `async` functions for reuse later with `<{blockName}>` and
 `<{/blockName}>` tags. Similar to code lines, these tags are automatically trimmed and invisible in the output. The use
 of named parameters is optional.
 
@@ -114,6 +116,17 @@ of named parameters is optional.
 ```
 
 To generate template blocks you can use `<{{blockName}}>` and `<{{/blockName}}>` tags.
+
+#### Inline Blocks
+
+To capture template blocks as anonymous `async` functions, for example to pass them as arguments to helper functions,
+you can use `{{{` and `}}}`.
+
+```
+<% const hello = await foo('bar', {{{
+  Hello World!
+<% }}}, 'baz'); %>
+```
 
 ### Debugging
 

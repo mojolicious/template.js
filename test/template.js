@@ -475,4 +475,16 @@ foo:<%%= await foo() %>
     t.equal(await Template.render('foo}>'), 'foo}>');
     t.equal(await Template.render('<{{...}}>'), '<{{...}}>');
   });
+
+  await t.test('Inline blocks', async t => {
+    t.equal(await Template.render('<% const foo = {{{ %>Foo<% }}}; %>foo:<%= await foo() %>'), 'foo:Foo');
+
+    const block = `
+% const foo = {{{
+  Foo
+% }}};
+foo:<%= await foo() %>
+`;
+    t.equal(await Template.render(block), '\nfoo:  Foo\n\n');
+  });
 });
