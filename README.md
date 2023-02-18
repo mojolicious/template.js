@@ -123,7 +123,7 @@ To capture template blocks as anonymous `async` functions, for example to pass t
 you can use `{{{` and `}}}`.
 
 ```
-<% const hello = await foo('bar', {{{
+<%= await foo('bar', {{{
   Hello World!
 <% }}}, 'baz'); %>
 ```
