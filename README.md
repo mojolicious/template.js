@@ -101,6 +101,8 @@ Code lines are automatically trimmed and always completely invisible in the outp
 % }
 ```
 
+#### Template Blocks
+
 You can also capture whole template blocks as `async` functions for reuse later with `<{blockName}>` and
 `<{/blockName}>` tags. Similar to code lines, these tags are automatically trimmed and invisible in the output. The use
 of named parameters is optional.
