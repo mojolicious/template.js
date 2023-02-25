@@ -43,9 +43,9 @@ type AST = ASTNode[];
 
 const DEBUG = process.env.MOJO_TEMPLATE_DEBUG === '1';
 
-const LINE_RE = /^(\s*)%(%|#|={1,2})?(.*?)$/;
-const START_RE = /(.*?)<%(%|#|={1,2})?/y;
-const END_RE = /(.*?)(=)?%>/y;
+const LINE_RE = /^(\s*)%(%|#|={1,2})?(\s*\}\}\})?(.*?)(\{\{\{\s*)?$/;
+const START_RE = /(.*?)<%(%|#|={1,2})?(\s*\}\}\})?/y;
+const END_RE = /(.*?)(\{\{\{\s*)?(=)?%>/y;
 const EVAL_STACK_RE = /at eval.+eval at _compileFn.+template\.ts:\d+:\d+.+<anonymous>:(\d+):\d+/;
 const VM_STACK_RE = /evalmachine.<anonymous>:(\d+)/;
 
@@ -168,12 +168,12 @@ function compileTemplate(ast: AST): string {
       }
 
       value = sanitizeExpr(value);
-      source += op === 'escape' ? `__output += __escape(${value}` : `__output += ${value}`;
+      source += op === 'escape' ? `__output += __escape(${value}` : `__output += (${value}`;
     }
 
     // Expression end
     if (op === 'escapeEnd' || op === 'expressionEnd') {
-      source += op === 'escapeEnd' ? ');' : ';';
+      source += ');';
     }
 
     // Text
@@ -188,12 +188,25 @@ function compileTemplate(ast: AST): string {
 
     // Block start
     else if (op === 'block') {
-      source += `const ${node.value} = async (${node.hints ?? ''}) => { let __output = '';`;
+      const {value} = node;
+
+      // Inline
+      if (value === '') {
+        source += `async () => { let __output = '';`;
+      }
+
+      // Named
+      else {
+        source += `const ${node.value} = async (${node.hints ?? ''}) => { let __output = '';`;
+      }
     }
 
     // Block end
     else if (op === 'blockEnd') {
-      source += 'return __safe(__output); };';
+      source += 'return __safe(__output); }';
+
+      // Named (end with semicolon)
+      if (node.value !== '') source += ';';
     }
 
     // Newline
@@ -237,7 +250,7 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
       // Tag end
       const endMatch = stickyMatch(sticky, END_RE);
       if (endMatch !== null) {
-        if (endMatch[2] === '=' && length === sticky.offset) {
+        if (endMatch[3] === '=' && length === sticky.offset) {
           trimTextBefore(nodes);
           trim = true;
         }
@@ -250,6 +263,7 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
         }
 
         appendNodes(nodes, {op: 'end', value: ''});
+        if (endMatch[2] !== undefined) appendNodes(nodes, {op: 'block', value: ''});
         op = 'text';
         continue;
       }
@@ -267,6 +281,7 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
       if (startMatch !== null) {
         const leftovers = startMatch[1];
         const type = startMatch[2];
+        const blockEnd = startMatch[3];
         if (leftovers !== '') appendNodes(nodes, ...parseBlock(leftovers, op));
 
         // Replacement
@@ -293,6 +308,7 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
             op = 'code';
           }
           appendNodes(nodes, {op, value: ''});
+          if (blockEnd !== undefined) appendNodes(nodes, {op: 'blockEnd', value: ''});
         }
       } else {
         appendNodes(nodes, ...parseBlock(line.slice(sticky.offset), op));
@@ -328,35 +344,41 @@ function parseTemplate(lines: string[]): AST {
       const lineMatch = line.match(LINE_RE);
       if (lineMatch !== null) {
         const type = lineMatch[2];
-        const value = lineMatch[3];
+        const blockEnd = lineMatch[3] ?? '';
+        const value = lineMatch[4];
+        const blockStart = lineMatch[5] ?? '';
 
         // Replacement
         if (type === '%') {
-          const {nodes, nextOp} = parseLine(lineMatch[1] + type + value, op, i === last);
+          const {nodes, nextOp} = parseLine(lineMatch[1] + type + blockEnd + value + blockStart, op, i === last);
           appendNodes(ast, ...nodes);
           op = nextOp;
         }
 
         // Comment
         else if (type === '#') {
-          appendNodes(ast, {op: 'comment', value});
-        }
+          appendNodes(ast, {op: 'comment', value: value});
+        } else {
+          if (blockEnd !== '') appendNodes(ast, {op: 'blockEnd', value: ''});
 
-        // Escaped expression
-        else if (type === '=') {
-          appendNodes(ast, {op: 'escape', value}, {op: 'escapeEnd', value: ''});
-          if (i !== last) appendNodes(ast, {op: 'text', value: '\n'});
-        }
+          // Escaped expression
+          if (type === '=') {
+            appendNodes(ast, {op: 'escape', value}, {op: 'escapeEnd', value: ''});
+            if (i !== last) appendNodes(ast, {op: 'text', value: '\n'});
+          }
 
-        // Expression
-        else if (type === '==') {
-          appendNodes(ast, {op: 'expression', value}, {op: 'expressionEnd', value: ''});
-          if (i !== last) appendNodes(ast, {op: 'text', value: '\n'});
-        }
+          // Expression
+          else if (type === '==') {
+            appendNodes(ast, {op: 'expression', value}, {op: 'expressionEnd', value: ''});
+            if (i !== last) appendNodes(ast, {op: 'text', value: '\n'});
+          }
 
-        // Code
-        else {
-          appendNodes(ast, {op: 'code', value});
+          // Code
+          else {
+            appendNodes(ast, {op: 'code', value});
+          }
+
+          if (blockStart !== '') appendNodes(ast, {op: 'block', value: ''});
         }
 
         // Newline
