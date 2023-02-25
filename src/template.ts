@@ -20,7 +20,18 @@ interface Source {
   name: string;
 }
 
-type Op = 'blockStart' | 'blockEnd' | 'code' | 'comment' | 'end' | 'escape' | 'expression' | 'line' | 'text';
+type Op =
+  | 'block'
+  | 'blockEnd'
+  | 'code'
+  | 'comment'
+  | 'end'
+  | 'escape'
+  | 'escapeEnd'
+  | 'expression'
+  | 'expressionEnd'
+  | 'line'
+  | 'text';
 
 interface ASTNode {
   hints?: string;
@@ -137,7 +148,7 @@ function compileTemplate(ast: AST): string {
   for (let i = 0; i < ast.length; i++) {
     const node = ast[i];
 
-    // Expression
+    // Expression start
     const op = node.op;
     if (op === 'escape' || op === 'expression') {
       let value = node.value;
@@ -157,7 +168,12 @@ function compileTemplate(ast: AST): string {
       }
 
       value = sanitizeExpr(value);
-      source += op === 'escape' ? `__output += __escape(${value});` : `__output += ${value};`;
+      source += op === 'escape' ? `__output += __escape(${value}` : `__output += ${value}`;
+    }
+
+    // Expression end
+    if (op === 'escapeEnd' || op === 'expressionEnd') {
+      source += op === 'escapeEnd' ? ');' : ';';
     }
 
     // Text
@@ -171,7 +187,7 @@ function compileTemplate(ast: AST): string {
     }
 
     // Block start
-    else if (op === 'blockStart') {
+    else if (op === 'block') {
       source += `const ${node.value} = async (${node.hints ?? ''}) => { let __output = '';`;
     }
 
@@ -204,7 +220,7 @@ function parseBlock(text: string, op: Op): AST {
   const blockMatch = text.match(BLOCK_RE);
   if (blockMatch === null) return [{op, value: text.replaceAll(BLOCK_REPLACE_RE, blockReplace)}];
 
-  const node: ASTNode = {op: blockMatch[2] === '/' ? 'blockEnd' : 'blockStart', value: blockMatch[3]};
+  const node: ASTNode = {op: blockMatch[2] === '/' ? 'blockEnd' : 'block', value: blockMatch[3]};
   if (blockMatch[4] !== '') node.hints = blockMatch[4];
 
   return [...parseBlock(blockMatch[1].trimEnd(), op), node, ...parseBlock(blockMatch[5], op)];
@@ -225,7 +241,15 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
           trimTextBefore(nodes);
           trim = true;
         }
-        appendNodes(nodes, {op, value: endMatch[1]}, {op: 'end', value: ''});
+
+        appendNodes(nodes, {op, value: endMatch[1]});
+        if (op === 'expression') {
+          appendNodes(nodes, {op: 'expressionEnd', value: ''});
+        } else if (op === 'escape') {
+          appendNodes(nodes, {op: 'escapeEnd', value: ''});
+        }
+
+        appendNodes(nodes, {op: 'end', value: ''});
         op = 'text';
         continue;
       }
@@ -280,7 +304,7 @@ function parseLine(line: string, op: Op, isLastLine: boolean): {nodes: AST; next
   // Trim blocks
   if (nodes.length > 0) {
     const lastOp = nodes[nodes.length - 1].op;
-    if (lastOp === 'blockStart' || lastOp === 'blockEnd') trim = true;
+    if (lastOp === 'block' || lastOp === 'blockEnd') trim = true;
   }
 
   // Newline
@@ -320,13 +344,13 @@ function parseTemplate(lines: string[]): AST {
 
         // Escaped expression
         else if (type === '=') {
-          appendNodes(ast, {op: 'escape', value});
+          appendNodes(ast, {op: 'escape', value}, {op: 'escapeEnd', value: ''});
           if (i !== last) appendNodes(ast, {op: 'text', value: '\n'});
         }
 
         // Expression
         else if (type === '==') {
-          appendNodes(ast, {op: 'expression', value});
+          appendNodes(ast, {op: 'expression', value}, {op: 'expressionEnd', value: ''});
           if (i !== last) appendNodes(ast, {op: 'text', value: '\n'});
         }
 
