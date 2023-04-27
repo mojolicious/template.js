@@ -152,7 +152,7 @@ __output += 'Hello\n';
 __output += __escape(message); __output += '!\n'; return __output; } } catch (error) { __context(error, __source) }
 ```
 
-You can set the `MOJO_TEMPLATE_DEBUG=1` environment variable to get the generated code printed to `STDERR`.
+You can set the `MOJO_TEMPLATE_DEBUG=1` environment variable to get the generated code printed to `stderr`.
 
 ### Editor Support
 
