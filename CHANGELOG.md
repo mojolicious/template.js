@@ -3,6 +3,17 @@
 
 This package strictly follows [Semantic Versioning](https://semver.org).
 
+## v3.0.0 (2026-10-24)
+
+### Breaking Changes
+
+  * Removed support for Node.js versions older than 22.18.
+
+### Bug Fixes
+
+  * Fixed a bug where values interpolated into `tmpl` tagged template literals were lost.
+  * Fixed a bug where `tmpl` could not be used as a tag for template literals in TypeScript.
+
 ## v2.2.0 (2023-02-08)
 
 ### Features

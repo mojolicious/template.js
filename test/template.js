@@ -1,4 +1,4 @@
-import Template, {tmpl} from '../lib/template.js';
+import Template, {tmpl} from '../src/template.ts';
 import t from 'tap';
 
 t.test('Template', async t => {
@@ -65,6 +65,8 @@ t.test('Template', async t => {
 
     t.equal(await tmpl`<html><%= "<html>" %></html>`.render(), '<html>&lt;html&gt;</html>');
     t.equal(await tmpl`<html><%= test %></html>`.render({test: 'works'}), '<html>works</html>');
+    const tag = 'p';
+    t.equal(await tmpl`<${tag}><%= test %></${tag}>`.render({test: 'works'}), '<p>works</p>');
 
     const fn = tmpl`<html><%= test %></html>`.compile();
     t.equal(await fn({test: 'this'}), '<html>this</html>');

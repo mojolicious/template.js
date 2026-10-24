@@ -108,10 +108,10 @@ export default class Template {
   }
 }
 
-export function tmpl(strings: string[], ...values: string[]): Template {
+export function tmpl(strings: TemplateStringsArray, ...values: any[]): Template {
   let template = '';
   for (let i = 0; i < strings.length; i++) {
-    template += strings[i] ?? '' + values[i] ?? '';
+    template += (strings[i] ?? '') + (values[i] ?? '');
   }
   return new Template(template);
 }
@@ -308,9 +308,8 @@ function parseTemplate(lines: string[]): AST {
 
         // Replacement
         if (type === '%') {
-          const {nodes, nextOp} = parseLine(lineMatch[1] + type + value, op, i === last);
+          const {nodes} = parseLine(lineMatch[1] + type + value, op, i === last);
           appendNodes(ast, ...nodes);
-          op = nextOp;
         }
 
         // Comment
